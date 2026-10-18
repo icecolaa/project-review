@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AI 面试准备 —— 基于 ice-colaa 项目的技术叙事与面试题</title>
+<style>
+:root{
+  --accent:#0f766e; --accent-soft:#f0fdfa; --ink:#1e293b; --muted:#64748b;
+  --line:#e2e8f0; --bg:#f8fafc; --card:#ffffff; --side:#0b1526;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.8;font-size:15px}
+#sidebar{position:fixed;top:0;left:0;bottom:0;width:258px;background:var(--side);color:#cbd5e1;overflow-y:auto;z-index:50;padding:20px 0 32px}
+#sidebar .brand{padding:4px 22px 16px;border-bottom:1px solid #1c2b45;margin-bottom:12px}
+#sidebar .brand b{color:#fff;font-size:16px;display:block}
+#sidebar .brand span{font-size:12px;color:#5b6b85}
+#sidebar .nav-group{font-size:11px;letter-spacing:.12em;color:#48597a;padding:14px 22px 4px;text-transform:uppercase}
+#sidebar a{display:block;padding:6px 22px;color:#94a3b8;text-decoration:none;font-size:13.5px;border-left:3px solid transparent;transition:.15s}
+#sidebar a:hover{color:#e2e8f0;background:rgba(255,255,255,.04)}
+#sidebar a.active{color:#fff;border-left-color:var(--accent);background:rgba(15,118,110,.22)}
+#sidebar a .n{display:inline-block;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+.backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40}
+/* ---------- 导航控制（分组折叠 / 左右换侧 / 桌面收起 / 移动端抽屉） ---------- */
+.side-tools{display:flex;gap:8px;padding:2px 20px 12px}
+.tool-btn{width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#cbd5e1;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1}
+.tool-btn:hover{background:rgba(255,255,255,.16);color:#fff}
+.tool-spacer{flex:1}
+.nav-group.collapsible{cursor:pointer;user-select:none}
+.nav-group .arrow{margin-left:auto;font-size:10px;color:#475569;transition:transform .2s}
+.nav-group.collapsed .arrow{transform:rotate(-90deg)}
+.nav-links[hidden]{display:none}
+.fab{display:none;position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:70;width:52px;height:52px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:20px;cursor:pointer;box-shadow:0 6px 18px rgba(15,23,42,.35);align-items:center;justify-content:center}
+.fab:active{transform:scale(.94)}
+.side-reopen{display:none;position:fixed;top:14px;z-index:45;background:var(--side);color:#e2e8f0;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:8px 14px;font-size:14px;cursor:pointer;box-shadow:0 4px 12px rgba(15,23,42,.25)}
+@media (min-width:901px){
+  body.side-collapsed #sidebar{display:none}
+  body.side-collapsed main,body.side-collapsed footer{margin-left:0;margin-right:0}
+  body.side-collapsed .side-reopen{display:inline-flex;align-items:center;gap:6px}
+  body.dock-right #sidebar{left:auto;right:0}
+  body.dock-right main,body.dock-right footer{margin-left:auto;margin-right:258px}
+  body.dock-right #sidebar a{border-left:0;border-right:3px solid transparent;padding-left:19px}
+  body.dock-right #sidebar a.active{border-right-color:var(--accent)}
+  body.dock-right .side-reopen{left:auto;right:14px}
+  body:not(.dock-right) .side-reopen{left:14px}
+}
+main{margin-left:258px;padding:40px 48px 80px;max-width:1120px}
+section{scroll-margin-top:16px;margin-bottom:56px}
+h2{font-size:24px;border-bottom:2px solid var(--line);padding-bottom:10px;margin:0 0 20px}
+h2 .en{font-size:12px;color:var(--muted);font-weight:normal;margin-left:10px}
+h3{font-size:18px;margin:26px 0 10px}
+h4{font-size:15.5px;margin:18px 0 8px;color:#334155}
+p{margin:8px 0}
+ul,ol{padding-left:22px;margin:8px 0}
+li{margin:4px 0}
+a{color:var(--accent)}
+code{background:#ecf3f1;border-radius:4px;padding:1px 6px;font-size:12.5px;font-family:Consolas,Menlo,monospace;color:#0f766e}
+.lead{color:var(--muted);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 26px;margin:16px 0;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:18px 0}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;text-align:center}
+.kpi b{display:block;font-size:24px;color:var(--accent);font-variant-numeric:tabular-nums}
+.kpi span{font-size:12.5px;color:var(--muted)}
+.tag{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:1px 10px;font-size:12px;margin:2px 4px 2px 0;white-space:nowrap}
+.tag.gray{background:#f1f5f9;color:#475569}
+.tag.amber{background:#fffbeb;color:#b45309}
+.tag.red{background:#fef2f2;color:#b91c1c}
+.tag.green{background:#ecfdf5;color:#047857}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:12px 0;background:#fff}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{background:#f1f5f9;text-align:left;padding:8px 12px;font-size:12.5px;color:#475569;white-space:nowrap}
+td{padding:7px 12px;border-top:1px solid var(--line);vertical-align:top}
+tbody tr:nth-child(even){background:#fafbfd}
+.nowrap{white-space:nowrap}
+.callout{border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;padding:12px 16px;margin:14px 0;font-size:14px}
+.callout.warn{border-color:#d97706;background:#fffbeb}
+.callout.red{border-color:#dc2626;background:#fef2f2}
+/* 面试题卡 */
+.qa{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:18px 0;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.qa .q{background:linear-gradient(90deg,var(--accent-soft),#fff);padding:14px 22px;font-weight:700;font-size:15.5px;border-bottom:1px solid var(--line);display:flex;gap:10px}
+.qa .q .qno{flex:0 0 auto;color:var(--accent);font-family:Consolas,monospace}
+.qa .a{padding:16px 22px}
+.qa .a p{margin:8px 0}
+.qa .follow{background:#f8fafc;border-top:1px dashed var(--line);padding:10px 22px;font-size:13.5px;color:#475569}
+.qa .follow b{color:#334155}
+.star{display:grid;grid-template-columns:64px 1fr;gap:6px 14px;margin:10px 0}
+.star .k{font-weight:700;color:var(--accent);font-size:13px;padding-top:2px}
+footer{margin-left:258px;padding:24px 48px;color:#94a3b8;font-size:12.5px;border-top:1px solid var(--line)}
+/* 响应式（移动端抽屉） */
+@media (max-width:900px){
+  #sidebar{width:min(258px,84vw);transform:translateX(-100%);transition:transform .25s ease}
+  body.dock-right #sidebar{left:auto;right:0;transform:translateX(100%)}
+  #sidebar.open,body.dock-right #sidebar.open{transform:none;box-shadow:0 0 40px rgba(0,0,0,.5)}
+  #sidebar a{padding:11px 20px;font-size:14.5px}
+  .backdrop.show{display:block}
+  .fab{display:flex}
+  body.no-scroll{overflow:hidden}
+  main,footer{margin-left:0;margin-right:0;padding:28px 18px calc(76px + env(safe-area-inset-bottom,0px))}
+  main{padding-top:24px}
+  .star{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<button class="fab" id="menuBtn" aria-label="打开导航" title="打开/关闭导航">☰</button>
+<button class="side-reopen" id="reopenBtn" aria-label="展开导航栏">☰ 目录</button>
+<div class="backdrop" id="backdrop"></div>
+
+<nav id="sidebar">
+  <div class="brand"><b>AI 面试准备</b><span>基于 ice-colaa 项目 · 2026.10</span></div>
+  <div class="side-tools">
+    <button class="tool-btn" id="dockBtn" title="把导航栏移到右侧" aria-label="切换导航栏位置">⇄</button>
+    <span class="tool-spacer"></span>
+    <button class="tool-btn" id="sideClose" title="收起导航栏" aria-label="收起导航栏">✕</button>
+  </div>
+  <div class="nav-group">基础</div>
+  <a href="#howto"><span class="n">① 使用说明与原则</span></a>
+  <a href="#map"><span class="n">② AI 内容全景地图</span></a>
+  <a href="#stories"><span class="n">③ 四条技术叙事线</span></a>
+  <div class="nav-group">项目话术</div>
+  <a href="#pitch-gotrip"><span class="n">④ GoTrip（旗舰）</span></a>
+  <a href="#pitch-party"><span class="n">⑤ 聚会游戏合集</span></a>
+  <a href="#pitch-wt"><span class="n">⑥ 多 AI 协作系统</span></a>
+  <a href="#pitch-others"><span class="n">⑦ 其他项目话术</span></a>
+  <div class="nav-group">面试题库</div>
+  <a href="#qa-ai"><span class="n">⑧ AI 应用与工程（8 题）</span></a>
+  <a href="#qa-agent"><span class="n">⑨ Agent 与多智能体（5 题）</span></a>
+  <a href="#qa-algo"><span class="n">⑩ 算法题（7 题）</span></a>
+  <a href="#qa-eng"><span class="n">⑪ 工程与架构（8 题）</span></a>
+  <a href="#qa-sys"><span class="n">⑫ 系统设计题（4 题）</span></a>
+  <div class="nav-group">防守</div>
+  <a href="#risk"><span class="n">⑬ 诚实口径与风险点</span></a>
+  <a href="#cheat"><span class="n">⑭ 一页速记卡</span></a>
+</nav>
+
+<main>
+<!-- ============ 使用说明 ============ -->
+<section id="howto">
+  <h2>① 使用说明与原则<span class="en">How to Use</span></h2>
+  <p>本文档把 2026 年 8–10 月的项目沉淀整理为面试可用的素材：<b>四条技术叙事线</b>给出整体故事，<b>项目话术</b>给出每个项目的 30 秒版本与深挖点，<b>面试题库</b>给出高频问题与结合项目的参考答案。</p>
+  <div class="callout">
+    <b>三条使用原则：</b>
+    <ol style="margin:6px 0">
+      <li><b>诚实为上</b>：所有答案都来自真实代码。模拟的就说模拟（妙记 Lite 的转写是规则模拟），进行中的就说进行中（ai-project 的 RAG 链路）——被追问实现细节时，真实经历才经得起三层追问。</li>
+      <li><b>数字优先</b>：每个故事带具体数字（225 次提交、28 套测试、20 万手交叉验证），比形容词可信。</li>
+      <li><b>取舍叙事</b>：面试官最想听的不是「我用了什么」，而是「我为什么这么选、放弃了什么」（如 GoTrip 放弃实时协作）。</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ 全景地图 ============ -->
+<section id="map">
+  <h2>② AI 内容全景地图<span class="en">AI Map</span></h2>
+  <p>先看清自己手里有什么牌。按「AI 含量的真实程度」分四档：</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>仓库</th><th>AI 内容</th><th>真实程度</th><th>面试怎么讲</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>spring-ai</code></td><td>Spring AI 全链路：ChatClient、记忆三级演进、摘要遗忘、PII 脱敏、RAG（Embedding→Milvus→拆分→重写→重排）、结构化输出、工具调用</td><td><span class="tag green">真 AI（真实调用百炼）</span></td><td>AI 学习的主证据，16 个模块可现场跑</td></tr>
+      <tr><td class="nowrap"><code>ai-image</code></td><td>多模态全家桶（文生图/图编辑/视频/TTS/VL）+ Advisor 责任链 + Agent 编排四模式（StateGraph）</td><td><span class="tag green">真 AI（DashScope）</span></td><td>多模态与 Agent 模式的对比实验</td></tr>
+      <tr><td class="nowrap"><code>go-trip</code></td><td>攻略解析→行程、行程生成、AI 问答、AI 生图封面、机票 AI 建议；JSON 模式、防幻觉过滤、离线兜底、异步 job</td><td><span class="tag green">真 AI（生产级工程化）</span></td><td>AI 应用工程化的最佳案例，含合规实战</td></tr>
+      <tr><td class="nowrap"><code>ai-project</code></td><td>RAG 电商客服：人设表、双层记忆、Milvus 配置、WebSocket 双端点</td><td><span class="tag red">设计完成、编码进行中</span></td><td>按系统设计题讲，勿称已上线</td></tr>
+      <tr><td class="nowrap"><code>party-games / wuziqi / dezhou-poker</code></td><td>博弈 AI：棋型评估+α-β 剪枝、Zobrist 置换表、蒙特卡洛胜率、对手建模、启发式卡牌 AI</td><td><span class="tag">算法 AI（传统 AI）</span></td><td>区别于 LLM 的另一条 AI 叙事线，可现场推导</td></tr>
+      <tr><td class="nowrap"><code>work-together</code></td><td>多 AI 协作编排：Spec→Plan→Verify、文件归属并发控制、CDP 驱动桌面会话、可见性证据</td><td><span class="tag green">真 AI（已上架 SkillHub）</span></td><td>把「用 AI 干活」本身做成产品</td></tr>
+      <tr><td class="nowrap"><code>wb-buddy-checkin</code></td><td>给 Agent 的结果契约（枚举判断）、自动化提示词模板</td><td><span class="tag green">已上架</span></td><td>Agent 工程的输出契约思想</td></tr>
+      <tr><td class="nowrap"><code>miaoji-lite</code></td><td>Provider 注册表（mock/whisper）+ Whisper 接入骨架；转写/总结为规则模拟</td><td><span class="tag amber">模拟 AI</span></td><td>讲工程能力与可替换适配层设计</td></tr>
+      <tr><td class="nowrap"><code>ai-prompts</code></td><td>12 条实战提示词方法论（HANDOFF 交接、验收纪律等）</td><td><span class="tag gray">方法论</span></td><td>证明 AI 协作习惯有体系</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ 叙事线 ============ -->
+<section id="stories">
+  <h2>③ 四条技术叙事线<span class="en">Story Lines</span></h2>
+  <div class="card">
+    <h4 style="margin-top:0">叙事线一：AI 应用工程化（GoTrip 为载体）</h4>
+    <p>「我不只会调大模型 API，而是解决 AI 落地的四个工程问题：输出不可控（JSON 模式 + Schema 转换 + 防幻觉过滤）、服务不可用（规则引擎离线兜底 + 双源降级）、响应太慢（异步 job 化 + 流式）、合规风险（小程序 AI 类目驳回后的去 AI 化改造）。」</p>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0">叙事线二：RAG 与记忆体系（spring-ai 为载体）</h4>
+    <p>「从零搭过完整 RAG 链路：文档读取→三种拆分器选型→向量化（适配批次上限）→Milvus→查询重写→重排序（top200 粗筛→rerank 精排）；对话记忆从内存演进到 Redis/MySQL，再加摘要遗忘和 PII 脱敏 Advisor。」</p>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0">叙事线三：多 Agent 协作系统（work-together 为载体）</h4>
+    <p>「把多 AI 协作本身做成了可发布的产品：主持方负责 Spec/Plan/Verify，执行方按文件归属并行干活；调度器是状态机，验收靠指纹比对，执行必须留下可见性证据——解决的是 Agent 干活『看不见、验不了、会越界』三个问题。」</p>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0">叙事线四：博弈 AI 与正确性验证（party-games 为载体）</h4>
+    <p>「LLM 之外的另一条 AI 线：五子棋的搜索算法（棋型评估+迭代加深 α-β+强制应手）、德州的蒙特卡洛胜率+对手建模、掼蛋的启发式拆牌代价。更重要的是验证方法论：20 万手交叉验证、AA 胜率校准到 85.2%、25 万局 fuzz + 与参考引擎差分测试。」</p>
+  </div>
+</section>
+
+<!-- ============ GoTrip 话术 ============ -->
+<section id="pitch-gotrip">
+  <h2>④ GoTrip —— 旗舰项目话术<span class="en">Pitch</span></h2>
+  <div class="card">
+    <h4 style="margin-top:0">30 秒电梯版</h4>
+    <p>「我独立完成了一个协作旅行规划平台，React + TypeScript 的 Web 端加微信原生小程序双端，25 天 225 次提交，约两万行前端、九千行小程序代码。核心特色是 AI 应用工程化：用户粘贴小红书攻略文本，大模型解析成结构化行程落库，还能按天号精准重写某几天；所有 AI 功能都有规则引擎兜底，AI 挂了功能不挂。项目完整经历了『自托管全栈 → 微信云托管 → CloudBase BaaS』的架构演进，包括一次主动的架构反转，以及小程序 AI 深度合成类目被驳回后的合规改造，最后用 190 张截图的自动化验收全绿发布。」</p>
+    <h4>STAR 展开</h4>
+    <div class="star"><div class="k">S 情境</div><div>国内没有好用的协作旅行规划工具，国外产品（TREK）不支持高德地图和微信生态。</div></div>
+    <div class="star"><div class="k">T 任务</div><div>独立完成产品从 0 到 1 并上架微信小程序，覆盖行程编排、地图、AA 记账、AI 解析攻略。</div></div>
+    <div class="star"><div class="k">A 行动</div><div>Monorepo（client/server/shared/miniprogram-app 四包）；高德瓦片接入 Leaflet 并自实现 WGS-84→GCJ-02 坐标转换；AI 链路做 JSON 模式+防幻觉过滤+离线兜底；微信 callContainer 15 秒硬超时倒逼出异步 job 化；发现 CloudBase 行级权限做不到跨用户共享后，主动砍掉自建 WebSocket 实时协作，换取最短合规发布路径。</div></div>
+    <div class="star"><div class="k">R 结果</div><div>小程序 1.5.20 发布，七轮清单验收 46/46 全绿；沉淀 65 条目交接日志和 7 条红线规则手册；性能优化把首屏云调用从约 100 次降到 36 次。</div></div>
+    <h4>预判追问与深挖点</h4>
+    <ul>
+      <li>为什么反转架构？（权限模型 + 合规 + 运维成本；冲突面被「单人单库」直接消掉）</li>
+      <li>AI 解析怎么保证质量？（response_format json_object、保留原文顺序、不编造价格、extractJson 兼容围栏、失败走正则兜底）</li>
+      <li>讲一次生产事故？（缓存键漏 passengers 导致 9 人查询污染 2 人；公网挂 3 天的全库导出接口复盘）</li>
+      <li>地图坐标系？（GPS 是 WGS-84，高德瓦片是 GCJ-02，不转换会偏移几百米，实现含克拉索夫斯基椭球参数和境内外判断）</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ party-games 话术 ============ -->
+<section id="pitch-party">
+  <h2>⑤ 聚会游戏合集 —— 话术<span class="en">Pitch</span></h2>
+  <div class="card">
+    <h4 style="margin-top:0">30 秒电梯版</h4>
+    <p>「一个 9 款游戏的联机聚会合集，纯 Node 零依赖，一个 140 行的注册表式入口挂载全部游戏。AI 是重点：五子棋是迭代加深 α-β 剪枝加棋型评估，象棋有 Zobrist 置换表和静态搜索，德州扑克是蒙特卡洛胜率加对手建模。我更想强调正确性验证：牌力评估器和独立暴力实现交叉验证 20 万手随机牌完全一致，AA 单挑胜率蒙特卡洛校准到 85.2%（公认值 85% 左右），掼蛋 fuzz 25 万局、和参考引擎差分对跑修出 4 类真实缺陷。整个仓库 28 套测试、2600 多断言。」</p>
+    <h4>深挖点</h4>
+    <ul>
+      <li>注册表式架构：新增游戏 = 一条注册项；三种通信并存（长轮询/WS/HTTP API）</li>
+      <li>外部引擎宿主 engine-host：懒启动、单飞队列、超时看门狗，以及修复的三个真实并发 bug（每个都能展开讲竞态窗口）</li>
+      <li>许可工程：MIT 自研与 GPL vendor（xqwlight 13,673 行）用 Web Worker 边界隔离，不混合</li>
+      <li>差分测试方法论：AI 出牌合法率变成可度量指标（missing=0）</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ work-together 话术 ============ -->
+<section id="pitch-wt">
+  <h2>⑥ 多 AI 协作系统 —— 话术<span class="en">Pitch</span></h2>
+  <div class="card">
+    <h4 style="margin-top:0">30 秒电梯版</h4>
+    <p>「work-together 是我做的多 AI 桌面协作工作流，已上架 SkillHub（v1.2.0，五维评测 4.6/5）。思路是把 AI 当团队用：一个主持 AI 写 Spec 和 Plan、做验收，把执行包派给另外两个 AI 桌面会话并行执行。三个关键设计：一是文件归属做并发控制，任务包之间文件不重叠才能并行，收口时全项目 sha256 指纹比对，归属外的任何改动直接阻断验收；二是状态机调度，exec_done 不等于 verified，主持 AI 必须读产物和测试退出码才算通过；三是可见性证据——通过 CDP 遍历 React fiber 树驱动桌面会话，要求『正确项目、选中会话、正文出现任务标记』三要素齐备才写证据文件，防止后台发成功了但人看不见的假执行。」</p>
+    <h4>深挖点</h4>
+    <ul>
+      <li>CDP 桥：BFS 3 万节点找 React fiber 上的服务对象、动态 import chunk 拿 store——逆向但全离线可测试（vm 伪造 DOM）</li>
+      <li>对称设计：调度器拒绝 engine===coordinator 的包，「主持方不能自己执行自己」</li>
+      <li>模型策略：指定模型不可用明确失败不静默替换；零费率优先，Auto 不当免费</li>
+      <li>零 npm 依赖 + 20 项离线测试 + PowerShell 5.1/7 双通道兼容</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ others 话术 ============ -->
+<section id="pitch-others">
+  <h2>⑦ 其他项目话术<span class="en">Pitches</span></h2>
+  <div class="card">
+    <h4 style="margin-top:0">spring-ai（学习项目怎么讲出深度）</h4>
+    <p>「我用两周做了 16 个递进模块把 Spring AI 过了一遍，但不是照抄 demo——比如记忆我做了从内存到 Redis 到 MySQL 的演进，再加摘要遗忘（超过 5 条触发专用小模型生成 80–300 字摘要回填）和 PII 脱敏 Advisor（双 ChatClient 架构：小模型专职脱敏，主模型对话）；RAG 我对比了三种拆分器，加了查询重写和重排序两级检索优化。」——把学习仓库讲成「实验记录」，突出对比与演进而非罗列 API。</p>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0">fdshare 金融数据共享（工作/实战项目）</h4>
+    <p>「基于若依做的银行金融数据共享查询系统，我负责前后端：前端 22 个页面，我做了配置驱动重构（列配置/字段分组 + 3 个 mixin + 6 个公共组件）消灭重复代码；后端 15 个接口，其中 fd_query_record 用 JSON 列承载 16 类异构查询的行数据、键与前端列配置对齐——这是『宽表 vs JSON』的取舍：查询模式多变、 schema 不稳定时 JSON 列免掉频繁 DDL。」另可讲审批流 6 态状态机、附件全生命周期、WinNAT 端口段吞 6379 的排查。</p>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0">wb-buddy-checkin（Agent 工程视角）</h4>
+    <p>「这个 Skill 的亮点是安全架构：走客户端本机 IPC 代发请求，全程零凭据接触——不解析加密登录态、不读内存、不落盘 token，客户端改加密方案我也不失效。还有『给 Agent 的结果契约』：JSON 输出固定结构，Agent 只需做三条枚举判断，SKILL.md 明写『不要读源码、不要展开推理』——把 LLM 的判断空间压到最小。」</p>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0">妙记 Lite（讲工程不讲 AI）</h4>
+    <p>「仿飞书妙记的会议纪要应用，全程零依赖零构建。我最满意的是懒执行任务设计：进度按时间戳懒推进而不是内存定时器，服务重启任务不丢，finalize 有防重入；还有双模式播放器（真实 audio 和 requestAnimationFrame 虚拟时间轴同一接口）。转写层我设计了 Provider 注册表，mock 和 Whisper 可切换——如实说明当前是模拟数据，接入点已留好。」</p>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0">ai-project（系统设计视角，勿称已完成）</h4>
+    <p>「这是一个进行中的多商户 AI 客服 SaaS，目前领域建模和前端完成，AI 主链路在写。设计上最有意思的是人设表：12 个字段把『沟通风格、问题解决思路、情绪智力、什么情况升级人工』都结构化了；记忆是 Redis 短期（10 条窗口）+ MySQL 长期双层。」——面试中主动说「设计完成、编码进行中」反而显得可信。</p>
+  </div>
+</section>
+
+<!-- ============ 题库 A：AI 应用与工程 ============ -->
+<section id="qa-ai">
+  <h2>⑧ 面试题库 · AI 应用与工程<span class="en">Q&amp;A</span></h2>
+
+  <div class="qa"><div class="q"><span class="qno">A1</span>介绍一个你做过的 RAG 项目，完整链路是怎样的？</div>
+    <div class="a"><p><b>结合 spring-ai 仓库作答（16 个模块中最完整的是 AI-code-21）：</b></p>
+    <ul>
+      <li><b>离线入库</b>：Tika/PDF/HTML Reader 读文档 → 拆分（对比过 TokenTextSplitter、语义拆分、递归拆分，观察过「换行符多拆的多」现象）→ qwen3.7-text-embedding 向量化（<b>踩坑：批次上限 12</b>，要分批）→ 写入 Milvus（<b>踩坑：collection 名不能带 "-"</b>），文档带 metadata 多标签。</li>
+      <li><b>在线检索</b>：用户问题先过 <b>RewriteQueryTransformer 查询重写</b>（自定义 prompt：扮演词汇清理专家，提取专业词汇提高向量检索精度）→ 向量检索（元数据过滤表达式、score 阈值）→ <b>RetrievalRerankAdvisor 重排</b>：向量库粗筛 topK=200 给 rerank 模型精排（similarityThreshold 0.4）→ 拼接上下文生成。</li>
+      <li><b>兜底</b>：<code>allowEmptyContext(false)</code>，检索为空时给模型明确提示而不是让它瞎编。</li>
+    </ul>
+    <p><b>为什么两级检索</b>：向量召回快但粗（topK=200 保证召回率），rerank 模型交叉编码精但贵（只对 200 条精排），这是「召回-精排」的经典权衡，和搜索推荐系统同构。</p></div>
+    <div class="follow"><b>可能追问：</b>三种拆分器怎么选？（结构化文档用递归保留层级、长文用 Token 控制窗口、语义拆分贵但边界的语义完整）；为什么需要查询重写？（口语化/多义词问题，重写后向量更接近知识库语料的分布）；Milvus 索引选型？（ai-project 里配过 ivf_flat + cosine，nlist/nprobe 取舍）。</div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">A2</span>大模型输出不稳定（格式不合规、编造内容）怎么办？</div>
+    <div class="a">
+      <p><b>分层治理，每层都有项目实例：</b></p>
+      <ul>
+        <li><b>约束层</b>：<code>response_format: json_object</code> 强制 JSON（GoTrip 解析攻略）；BeanOutputConverter 自动生成 JSON Schema 注入 prompt（spring-ai 结构化输出模块）；SupervisorAgent 的 instruction 直接写死「只输出 JSON 数组，完成输出 []」。</li>
+        <li><b>校验层</b>：GoTrip 飞哪儿 AI 建议要求返回的航班 id <b>必须来自候选集合</b>，返回后用 availableIds 过滤——模型编造的 id 直接被丢弃；extractJson 兼容 ```json 围栏和裸 JSON 两种形态。</li>
+        <li><b>Prompt 约束</b>：解析攻略时明确「严格保留原文顺序不重排」「不编造价格」「概要行并入当天最后一条 notes」。</li>
+        <li><b>失败路径</b>：解析失败降级到 builtinParseGuide 规则引擎，功能不中断。</li>
+      </ul>
+      <p><b>经验总结</b>：对 LLM 输出永远「约束 + 校验 + 兜底」三件套，不信任单点。</p></div>
+    <div class="follow"><b>可能追问：</b>json_object 模式的副作用？（会把回答包进 {"answer":...}，GoTrip 助手场景特意关掉）；JSON 解析失败重试策略？（有限重试 + 换更低温度 + 最终走规则引擎）。</div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">A3</span>AI 服务挂了/超时，你的应用会怎样？（降级与容错设计）</div>
+    <div class="a">
+      <p><b>GoTrip 的设计原则是「任何情况不回落假数据，但功能永远可用」：</b></p>
+      <ul>
+        <li><b>功能级兜底</b>：AI 解析攻略失败 → builtinParseGuide（6 组正则关键词分类 + 中文数字天数解析 + 路线型标题识别）；锦囊 AI 生成失败 → 20+ 城市手写内容库；助手失败 → 内置功能指南 FALLBACK_GUIDE。</li>
+        <li><b>数据源降级</b>：天气走高德 geocode→adcode→weatherInfo 主链路，失败降级 Open-Meteo（带 WMO code 映射表），全败返回诚实占位——每个数据带 source 标识（-2 高德源 / -1 占位），前端绝不把占位当真数据渲染。</li>
+        <li><b>超时治理</b>：微信 callContainer 15 秒硬超时 vs AI 任务 10–40 秒的矛盾 → 统一异步 job 化（submit 秒回 jobId + 轮询 + TTL 5 分钟 GC）；spring-ai 里工具调用用 CompletableFuture.orTimeout(3s) + exceptionally 兜底提示，超时设为外部 API 平均响应的 2–3 倍。</li>
+      </ul></div>
+    <div class="follow"><b>可能追问：</b>兜底规则引擎的准确率？（不如大模型，但结构可用、用户可手动改——「可用性优先于完美」）；job 存内存行不行？（服务锁定 MaxNum=1 单实例可行，多实例要落 Redis）。</div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">A4</span>多轮对话的记忆怎么设计？</div>
+    <div class="a">
+      <p><b>结合 spring-ai 的演进路径 + ai-project 的设计作答：</b></p>
+      <ul>
+        <li><b>存储演进</b>：内存 → Redis（JedisChatMemoryRepository，窗口 10 条）→ MySQL（JDBC repo，窗口 5）→ 按 conversationId 多用户隔离。</li>
+        <li><b>遗忘机制</b>：消息数 ≥5 时触发专用摘要客户端（system prompt 工程化：保留用户核心目标/未解决问题/最新意图，第三人称，80–300 字，不加前缀），摘要后 clear 再回填摘要消息——手写了一个 SummarizingChatMemory。要点：<b>摘要用便宜的小模型，主对话用大模型</b>。</li>
+        <li><b>隐私</b>：自定义 BaseAdvisor，before 钩子里用独立脱敏客户端把姓名/手机号/身份证替换为占位符再进主链——<b>双 ChatClient 架构</b>，脱敏发生在消息进入主模型之前。</li>
+        <li><b>ai-project 的双层设计</b>：Redis 短期记忆限 10 条上下文 + MySQL 长期记忆，会话结束可回溯。</li>
+      </ul></div>
+    <div class="follow"><b>可能追问：</b>摘要丢失细节怎么办？（滑动窗口+摘要混合：最近 N 条原文 + 更早的摘要）；为什么脱敏放 Advisor 不放后处理？（进主链前脱敏，日志和上下文里都不留 PII）。</div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">A5</span>分享你的 Prompt 工程实践。</div>
+    <div class="a">
+      <ul>
+        <li><b>结构化任务的 prompt 是「规格书」</b>：GoTrip 的 PARSE_SYSTEM 细到枚举分天标记的四种写法（Day N / 第 N 天 / 「D5：10月5日：路线A-路线B」）、明确「餐：/行：/游：/住：」概要行的归属、禁止重排原文顺序、禁止编造价格——把解析器规格写进 prompt。</li>
+        <li><b>人设对比设计</b>：ai-image 的评估-优化循环里，writer 是「不太懂科技文案的小白」、evaluator 是「需要精确数据才能通过的评估师」，人设落差制造改进空间。</li>
+        <li><b>语义压缩</b>：给 Agent 的结果契约——「输出固定 JSON、只判断三条枚举、不要读源码不要展开推理」，压缩 LLM 的自由发挥空间。</li>
+        <li><b>沉淀</b>：ai-prompts 仓库 12 条实战提示词版本化维护（HANDOFF 两步交接法、验收纪律、三态测试）。</li>
+      </ul></div>
+    <div class="follow"><b>可能追问：</b>怎么评估 prompt 好坏？（GoTrip 用验收脚本断言解析结果结构；哨兵词 WORK_SUCCESS/WORK_FAIL 把主观评估变结构化判定）。</div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">A6</span>流式输出了解吗？你的项目为什么没用？</div>
+    <div class="a">
+      <p><b>诚实作答 + 展示知识面</b>：spring-ai 学习线尚未覆盖 SSE/Flux 流式（可作为下一步计划），但理解原理：SSE 单向推送适配 LLM token 流，Flux&lt;String&gt; 在 Spring 里配 <code>text/event-stream</code> 产出；ai-project 的 WebSocket 消息设计里已经预留了「AI 回复逐帧推送、前端拼接组装」的流式协议。GoTrip 没用流式是因为核心 AI 场景是「解析成结构化 JSON 落库」，需要完整结果而非逐字展示；异步 job + 轮询已解决体感问题。</p></div>
+    <div class="follow"><b>可能追问：</b>流式 + 结构化输出冲突吗？（流式输出 JSON 要增量解析或分段提取，复杂度高；内部 API 拿完整 JSON、面向用户的部分才流式）。</div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">A7</span>多模态 AI 做过什么？</div>
+    <div class="a">
+      <p><b>ai-image 仓库（真实调用 DashScope）：</b>文生图（qwen-image-plus：prompt_extend 自动扩写、negative_prompt、1664×928）；图像编辑（MultiModalConversation + 双参考图 + 中文编辑指令，参数外置 yaml 注入）；视频（wan3.0 文生视频运镜 prompt、图+音频驱动、多参考主体视频三种模式）；多模态理解（qwen3-vl-plus 双图问答）；TTS（WebSocket 双工、关注首包延迟指标）。<b>应用侧</b>：GoTrip 的 AI 封面生成走 CogView-3-flash，处理过 base64 返回 &lt;700KB 的限制。</p></div>
+    <div class="follow"><b>可能追问：</b>生图 prompt 技巧？（主体/风格/构图分层 + prompt_extend 自动扩写 + negative_prompt 排除瑕疵）；视频生成成本控制？（先文生图确认构图再图生视频）。</div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">A8</span>AI 功能上线要考虑什么合规问题？</div>
+    <div class="a">
+      <p><b>有真实的被驳回经历：</b>GoTrip 个人主体小程序因「AI 深度合成类目」被微信驳回。处置：① 用户可见文案全面「去 AI 化」（AI 解析攻略 → 攻略导入）；② AI 对话页从注册流程中摘出 + packOptions 排除打包；③ 验收脚本增加「AI 页不可达」断言。更深层的合规意识：AI 输出标注来源（builtin/amap/ai）；PII 脱敏 Advisor 在数据进模型前处理；舆情五步框架里每步明确「AI 可协助 vs 人必须负责」的边界。</p></div>
+    <div class="follow"><b>可能追问：</b>生成内容的责任归属？（服务提供者审核义务、内容标识、留痕）；为什么不直接做企业主体备案？（个人开发者的成本权衡，功能价值与合规成本的取舍）。</div>
+  </div>
+</section>
+
+<!-- ============ 题库 B：Agent ============ -->
+<section id="qa-agent">
+  <h2>⑨ 面试题库 · Agent 与多智能体<span class="en">Q&amp;A</span></h2>
+
+  <div class="qa"><div class="q"><span class="qno">B1</span>常见的 Agent 编排模式有哪些？</div>
+    <div class="a">
+      <p><b>用 ai-image 的四种实现作答（同仓库可对比）： </b></p>
+      <ul>
+        <li><b>评估-优化循环（Evaluator-Optimizer）</b>：writer 生成 → qualityEvaluator 评审 → 不 pass 就重写。我实现了两版：<b>手写 while 循环版</b>（直观、好调试）和 <b>StateGraph 声明版</b>（ReactAgent.asNode、KeyStrategy 状态管理、WORK_SUCCESS/WORK_FAIL 条件边、CompiledGraph.stream() 流式）——结论是简单循环手写够用，多分支/并行/需要重放时图编排优势明显。</li>
+        <li><b>路由模式（Routing）</b>：LlmRoutingAgent 靠每个子 Agent 的 description 让 LLM 选路，outputKey 隔离各自产物。</li>
+        <li><b>监督者模式（Supervisor）</b>：mainAgent 只负责把任务分解为 JSON 数组（如 ["create_agent","translator_agent"]），严禁自己动手——「规划与执行分离」。</li>
+        <li><b>串行/并行流水线</b>：SequentialAgent 用 {article} 占位符传递；ParallelAgent 三路扇出 + DefaultMergeStrategy 合并。</li>
+      </ul></div>
+    <div class="follow"><b>可能追问：</b>循环怎么终止？（哨兵词【pass】/WORK_SUCCESS 结构化判定 + 最大轮数兜底）；状态在节点间怎么传？（KeyStrategy/ReplaceStrategy 决定覆盖还是合并）。</div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">B2</span>让多个 AI 工具协作，你会怎么设计？</div>
+    <div class="a">
+      <p><b>直接讲 work-together 的方案（已上架 SkillHub）：</b></p>
+      <ul>
+        <li><b>角色分离</b>：主持 AI 负责 Spec（目标/边界/逐条验收）→ Plan（任务包：id/prompt/files/acceptance/dependsOn）→ Verify；执行 AI 只做执行。调度器硬编码拒绝 engine 与 coordinator 相同的包。</li>
+        <li><b>并发控制用文件归属</b>：每个任务包声明拥有的文件，canStart 要求与在跑包的归属不重叠；realpath 链解析防 symlink 逃逸、Windows 大小写不敏感比较。</li>
+        <li><b>状态机</b>：queued→creating→dispatching→running→needs_user→exec_done→verified；依赖包必须前置 verified。</li>
+        <li><b>验收</b>：exec_done 只代表执行器说做完了；主持 AI 读 diff/测试退出码后显式 verify；收口时 boundaryChanges 做全项目指纹比对，<b>归属外任何改动（包括主持 AI 自己迟写的文件）阻断</b>。</li>
+        <li><b>可见性</b>：执行必须留下「正确项目+选中会话+正文任务标记」三要素证据，杜绝假执行。</li>
+      </ul></div>
+    <div class="follow"><b>可能追问：</b>为什么不用 LangChain/AutoGen？（目标是驱动真实桌面工具干真实文件，跨工具编排是 CLI 框架做不到的；且零依赖可控）；needs_user 怎么处理？（自动生成介入卡，人工处理后 resume，planHash 校验拒绝中途改计划）。</div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">B3</span>怎么防止 Agent「假装干活」和幻觉？</div>
+    <div class="a">
+      <p><b>work-together 的反幻觉体系：</b>① 执行必须产生可见性证据文件（三要素校验）；② unknown 状态不自动重派（避免越错越多），显示失败用 open 修复现场；③ 不伪造会话——接口不可用就明确报告缺口而不是降级模拟；④ 指纹比对抓越界改动；⑤ SKILL.md 把「不得把自测称为主持方验收通过」写成行为契约。<b>应用侧对应</b>：GoTrip 的航班 id 候选集合过滤、来源标注（builtin/amap/ai）、占位数据不冒充真数据。</p></div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">B4</span>Function Calling 的工具怎么工程化管理？</div>
+    <div class="a">
+      <ul>
+        <li><b>声明方式</b>：@Tool/@ToolParam 注解式 vs MethodToolCallback 编程式（ReflectionUtils.findMethod + ToolDefinitions.builder 写 name/description）——description 是给模型看的接口文档，质量直接决定调用准确率。</li>
+        <li><b>权限</b>：Spring Security @EnableMethodSecurity 让工具方法上的权限注解生效——工具不是人人可调。</li>
+        <li><b>稳定性</b>：ConcurrentHashMap 结果缓存（选型理由写在注释里）；CompletableFuture.orTimeout(3s) + exceptionally 返回兜底提示，超时设为外部 API 平均响应 2–3 倍。</li>
+        <li><b>实战案例</b>：GoTrip 调飞猪 CLI——spawn 子进程 + 串行队列 + 450ms 节流 + 429 指数退避重试 3 次 + 双层缓存（原始 10min/结果 30min）+ inflight 去重，还踩过「缓存键漏 passengers」的坑。</li>
+      </ul></div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">B5</span>如何评估一个 Agent 系统的质量？</div>
+    <div class="a">
+      <p><b>用 party-games 的方法论迁移作答</b>：核心思路是「把主观变成可度量」——① 结构化判定替代主观评估（哨兵词 pass/WORK_SUCCESS）；② 差分测试：与参考实现对跑比对序列，掼蛋修出 4 类缺陷、missing=0；③ 校准断言：AA 胜率 0.80–0.90 区间断言（实测 85.2% 与公认值吻合）；④ 行为指标：AI 出牌合法率、任务包 verified 率、执行区间重叠毫秒数作为并发证明。Agent 系统同理：任务成功率、越界率（指纹 diff）、人工介入率、重派率。</p></div>
+  </div>
+</section>
+
+<!-- ============ 题库 C：算法 ============ -->
+<section id="qa-algo">
+  <h2>⑩ 面试题库 · 算法题<span class="en">Q&amp;A</span></h2>
+
+  <div class="qa"><div class="q"><span class="qno">C1</span>手写/设计一个五子棋 AI，你的方案？</div>
+    <div class="a">
+      <p><b>wuziqi/ai.js（360 行）三层结构：</b></p>
+      <ul>
+        <li><b>① 单点棋型打分</b>：候选点沿 4 方向取 9 格窗口，与模式串优先级匹配——连五 1,000 万 / 活四 50 万 / 冲四（含跳冲四 11011 等）3 万 / 活三 8 千 / 眠三 700 / 活二 500 / 眠二 100；<b>组合加成</b>：双四 +20 万、四三杀 +12 万、双活三 +3 万（计数器实现）。攻防一体：候选点 = 己方价值 + 对方同点价值 × 0.9。</li>
+        <li><b>② 威胁强制应手</b>：搜索每个节点先战术收窄——己方有成五点直接返回 win；对方 ≥2 处成五点返回 lose（提前判负剪枝）；恰 1 处返回 block，<b>强制只搜拦截点</b>。</li>
+        <li><b>③ 迭代加深 α-β</b>：深度 2→4 步进 2，超时丢弃当前层保留上一层完整结果；每层按分值重排根着法提高剪枝效率；分值 ≥ WIN_SCORE−100 提前终止；<b>强制应手延伸</b>——深度用尽但处于 block 态再搜 1 层，解决水平线效应。</li>
+        <li>难度 = 参数化（easy 纯贪心+前 3 随机、medium 深度 2、hard 深度 4 + rootCap 16）。</li>
+      </ul></div>
+    <div class="follow"><b>可能追问：</b>为什么活四 50 万 &gt; 双冲四 2×3万+20万？（活四下一手必胜且无法同时防；分值表要保证「必胜态 &gt; 强组合 &gt; 单威胁」全序正确）；候选点怎么生成？（距已有棋子 2 格内空点，避免全盘遍历）。</div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">C2</span>德州扑克 AI 怎么做决策？</div>
+    <div class="a">
+      <p><b>poker-ai.js：胜率 + 赔率 + 对手建模的规则引擎。</b></p>
+      <ul>
+        <li><b>蒙特卡洛胜率</b>：每步模拟 300–2600 次（难度决定），<b>部分洗牌优化</b>——Fisher-Yates 只打乱前 need = 对手×2 + 剩余公共牌 张，其余不动（未被选中的牌保持原位不影响均匀性证明可以讲：只需保证被抽取部分随机）；对手牌力一旦超过己方立即 break 早退。</li>
+        <li><b>决策阈值</b>：翻前用「公平份额」fair = 1/(opps+1) 的倍数定可玩性（开局 1.85、3-bet 2.05 且限 3 次加注内）；翻后价值下注阈值 0.56 ± 位置/对手数/风格修正；面对下注所需胜率 = 底池赔率 + 0.02 + 加注惩罚。</li>
+        <li><b>对手建模</b>：本街加注次数 → 威胁系数；「跟注站」探测（弃牌率 &lt;28%）→ 诈唬价值下降、价值下注可更薄。</li>
+        <li><b>风格与失误层</b>：每局随机 aggro/tight/bluff 人格；novice 有 22% 失误率（且失误跟注限半个筹码栈，不为失误送命）；大师 eff&gt;0.90 非河牌 25% 概率慢打设陷阱。</li>
+      </ul></div>
+    <div class="follow"><b>可能追问：</b>为什么不用博弈树/CFR？（非完美信息博弈状态空间爆炸，实时对局里蒙特卡洛+启发式是性价比解；CFR 离线训练成本高）；怎么验证？（20 万手牌力评估交叉验证 + AA 胜率校准 85.2%）。</div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">C3</span>现场写：德州扑克多人 all-in 的边池怎么分？</div>
+    <div class="a">
+      <p><b>buildPots 分层切池算法</b>：按玩家 totalBet 升序分层，每层池 = (本层 bet − 上层 bet) × 参与该层的玩家数，eligible 记录「投入 ≥ 本层金额且未弃牌」的玩家；差额归最后一池；平分时余码按座位顺序逐个分配。<b>举例</b>：A all-in 100、B all-in 300、C all-in 500 → 主池 100×3=300（A/B/C 竞争）；边池1 200×2=400（B/C）；边池2 200×1=200（C 独得回）。另有两个细节：refundUncalled 退还未被跟注部分；bettingComplete 以 acted + bet ≥ currentBet 判定街结束，加注重开行动权。</p></div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">C4</span>设计「转账最少」的 AA 结算算法。</div>
+    <div class="a">
+      <p><b>贪心（shared/budget.ts）</b>：算每人净额（垫付 − 应付），债权人降序、债务人降序（绝对值），头尾互相抵扣：min(债权, 债务) 成一笔转账，直到归零。最多 n−1 笔。<b>两个工程细节</b>：① 浮点容差 0.005；② 小程序版改为<b>以分为单位</b>的整数运算，取整余数记回垫付人保证总额守恒——两版对比可谈「金额永远不要用浮点累加」。补充亮点：行程体检算法（时间重叠、转场 &lt;30 分钟且换地点、单日 ≥7 项预警）。</p></div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">C5</span>为什么 GPS 坐标显示在高德地图上会偏？怎么解决？</div>
+    <div class="a">
+      <p><b>GCJ-02 火星坐标系问题（go-trip 的 gcj02.ts）</b>：GPS 输出 WGS-84，高德瓦片用国测局 GCJ-02 加密坐标，直接叠加偏移 100–700 米。解决：实现标准转换算法——克拉索夫斯基椭球参数 + 正弦扰动计算偏移量，注意<b>境内外判断</b>（outOfChina 直接返回原坐标），转换是单向近似（GCJ→WGS 需迭代反向求解）。同类坑：POI 搜索返回的坐标已是 GCJ-02 就不能再转。</p></div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">C6</span>Zobrist 哈希置换表的原理和碰撞问题？</div>
+    <div class="a">
+      <p><b>party-games 象棋 AI（xq-ai.js）</b>：每个（棋子, 位置）组合预生成随机数，走子时增量 XOR 更新局面哈希（O(1)），置换表缓存「局面 → 搜索结果」，避免重复搜索。<b>碰撞设计</b>：双 32 位拼合而非单 64 位（JS 位运算 32 位截断问题），xorshift32 确定性种子保证可复现；TT 记录三态 flag（精确/下界/上界）配合 α-β 边界使用——只有 flag 匹配当前窗口才能直接返回，否则仅用于着法排序。<b>着法排序</b>：TT 置顶着法优先 + MVV-LVA（最贵 victim 配最便宜 attacker 优先）。</p></div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">C7</span>什么是静态搜索（quiescence）？为什么只延伸吃子？</div>
+    <div class="a">
+      <p><b>解决水平线效应（horizon effect）</b>：固定深度搜索在叶子处可能正好停在「刚被吃子还没回吃」的局面，评估严重失真。quiesce 在叶子处只延伸产生局面剧变的着法（吃子），直到局面「安静」再评估，限深 4 防止爆炸。五子棋里对应的是「强制应手延伸」——处于必须拦截的战术态时延伸搜索。两者本质相同：<b>在评估前让局面到达稳定点</b>。</p></div>
+  </div>
+</section>
+
+<!-- ============ 题库 D：工程架构 ============ -->
+<section id="qa-eng">
+  <h2>⑪ 面试题库 · 工程与架构<span class="en">Q&amp;A</span></h2>
+
+  <div class="qa"><div class="q"><span class="qno">D1</span>HTTP 长轮询和 WebSocket 怎么选？你两个都实现过？</div>
+    <div class="a">
+      <p><b>两个都实现了，场景不同：</b></p>
+      <ul>
+        <li><b>五子棋用长轮询</b>（server.js 321 行零依赖）：GET /state?v=版本号 服务端挂起最长 25 秒（waiter Set，touch 时唤醒推送），客户端 AbortController 32 秒兜底 + 1.2 秒重试。<b>选它</b>：回合制低频更新、零依赖、穿透性好（不需要 Upgrade 头）、实现简单。</li>
+        <li><b>德州扑克用 WebSocket</b>（手写 RFC6455）：下注轮询实时性强、双向（行动 + 推送）。<b>代价</b>：要自己处理握手/掩码/分片/心跳。</li>
+        <li><b>共同点</b>：都是服务器权威 + 版本/座位脱敏，客户端只是渲染。</li>
+      </ul></div>
+    <div class="follow"><b>可能追问：</b>SSE 为什么不选？（单向，游戏需要双向行动上报）；长轮询的服务器资源问题？（每房间 waiter Set 挂起连接，500 房上限 + GC 回收）。</div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">D2</span>手写 WebSocket 协议（RFC6455）要注意什么？</div>
+    <div class="a">
+      <p><b>dezhou-poker/server.js 494 行零依赖实现：</b>① 握手：Sec-WebSocket-Key + 固定 GUID 做 SHA-1 → Base64 返回 Accept；② 帧解析：FIN/opcode、<b>mask 掩码还原</b>（客户端→服务端必须掩码）、126/127 扩展长度（127 用 BigUInt64 读 8 字节）；③ <b>分片重组</b>：opcode 0 continuation 帧拼接到前一条消息；④ ping/pong 心跳、close 握手；⑤ 10MB 帧上限防内存攻击。掼蛋服务器还有独立一份实现 + WS ping 保活（死连接写失败触发 cleanup）。</p></div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">D3</span>为什么游戏逻辑要在服务端跑？直接信客户端不行吗？</div>
+    <div class="a">
+      <p><b>防作弊 + 一致性：服务器权威架构。</b>德州的引擎跑在服务端 <b>vm.createContext 沙箱</b>里（三份源码拼接注入，共享顶层 const 正则改写 var；DRIVER_SRC 把 UI 函数桩化为 hooks，真人行动由 humanTurnHook 返回 Promise 等 WS 消息 resolve）。<b>底牌按座位脱敏</b>：stateFor 只把底牌发给本人或已摊牌者——底牌在摊牌前不出服务器，抓包也看不到。断线 45 秒压到 5 秒自动代打；<b>僵尸连接防护</b>：action 消息校验 seat.ws === 当前连接，旧连接不能替已被认领的座位行动。</p></div>
+    <div class="follow"><b>可能追问：</b>为什么用 vm 沙箱不直接 require？（同一份引擎代码浏览器/服务端复用 + 隔离全局变量注入 hooks；vm 不是安全边界，防的是误操作不是恶意代码）。</div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">D4</span>讲一个你修过的并发 bug。</div>
+    <div class="a">
+      <p><b>engine-host.js 的三个真实并发缺陷（都有回归断言）：</b></p>
+      <ul>
+        <li>① <b>超时回调引用了作用域外的 reject</b>：引擎握手超时一旦真的发生就 uncaught ReferenceError 带走整个服务进程（引擎二进制卡死 = 全站下线）——改为走 st.starting.reject。</li>
+        <li>② <b>旧进程迟到的 exit 事件误清新进程状态</b>：重启后旧句柄的 exit 触发把新状态清掉——改为按进程身份把关（if (st.proc !== proc) return）。</li>
+        <li>③ <b>并发第二个查询永久挂死</b>：单飞队列里第一个查询 settle 后没人推进队列——改为 settle 内 pump + 按条目身份幂等结算。</li>
+      </ul>
+      <p>共同教训：异步回调要<b>携带身份</b>，按「哪个实例/哪次请求」校验后再操作共享状态。</p></div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">D5</span>没有现成测试方案的黑盒系统，怎么保证正确性？</div>
+    <div class="a">
+      <p><b>差分测试方法论（party-games）</b>：写 Python harness 与参考引擎对跑数百局，逐帧比对手牌/出牌序列。战果：掼蛋修出 4 类缺陷（同花顺不进 AI 候选、<b>A2233/AAA222 级牌回绕不认</b>、三带二万能替换枚举不全、天王炸从不生成），斗地主对 rlcard 修出 3 类（首出缺四带二/飞机带单对/王炸、附件只出单一代表、未禁拆王炸作翅膀），最终 missing=0。加上 fuzz：25 万局随机局。核心思想：<b>不验证「对不对」，验证「和参照物是否一致」</b>——参照物可以是参考实现、公认常数（AA 胜率 85.2%）、或双实现交叉验证（20 万手牌力评估）。</p></div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">D6</span>讲一次你主动推翻自己架构的经历。</div>
+    <div class="a">
+      <p><b>GoTrip 的架构反转（9/26，25 commits 的当天）</b>：v1 是 Node 容器 + WebSocket 实时协作 + 自管数据库（经历了 SQLite→PG→MySQL 三方言）。迁移 CloudBase 后发现：数据模型权限是「仅创建者可读写」（_openid 行级隔离），<b>跨用户共享行做不到</b>；而实时协作 + 有状态容器是小程序审核和运维的最大风险面。决策：<b>主动去掉实时协作</b>——行程按账号独立、占位同伴用于分账、写操作落动态流，冲突面被「单人单库」直接消掉（乐观写 + 写后 reload 全量重拉）；Web 切 rdb 直连，容器瘦身为无状态代理（只守 AI/POI/机票密钥）。代价是「协作」退化，换来最短合规发布路径。教训：<b>用产品语义换工程复杂度，发布比完美重要</b>。</p></div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">D7</span>Serverless/容器平台的冷启动和探活有什么坑？</div>
+    <div class="a">
+      <p><b>GoTrip 实战三连</b>：① 云托管冷启动被 DB 初始化卡死，平台按 /health 状态码判活会反复重启容器 → 改为<b>先 server.listen 再后台 initDb</b>，/health 恒 200（可用性写在 body）；② 平台「写后立即 list」有可见性延迟 → 创建后用 createRows 返回的 idList，禁止写后立即 list；③ callContainer 必须带 X-WX-SERVICE 头，漏了全部容器 API 404。这些平台怪癖全部沉淀在 entities.ts 的注释里，并写进 7 条红线手册。</p></div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">D8</span>不依赖框架的 IPC/协议逆向要注意什么？</div>
+    <div class="a">
+      <p><b>wb-buddy-checkin 的经验</b>：① <b>安全边界优先</b>：只走客户端 IPC 代发（endpoint+ticket 握手，鉴权头客户端附加），零凭据接触——客户端改登录态加密我也不失效；② <b>协议细节</b>：HMAC-SHA256 四帧挑战应答、五段大端 uint32 长度前缀 transcript、<b>双向验证</b>（反向校验服务端 proof 用 compare_digest 防时序攻击）；③ <b>隐性约束要踩出来并记录</b>：RPC 帧缺 mode 字段永远不返回、Windows 命名管道一读一写并发直接 EINVAL（解法：每次往返临时读线程 + join 超时 + broken 状态机）、HTTP 400 + body code 表达业务语义；④ <b>离线自检</b>：7 项不联网自检验证协议实现（含 transcript 四路敏感性、NDJSON 粘包半包拆帧）。</p></div>
+  </div>
+</section>
+
+<!-- ============ 题库 E：系统设计 ============ -->
+<section id="qa-sys">
+  <h2>⑫ 面试题库 · 系统设计题<span class="en">Q&amp;A</span></h2>
+
+  <div class="qa"><div class="q"><span class="qno">E1</span>设计一个智能客服系统（含知识库问答与转人工）。</div>
+    <div class="a">
+      <p><b>直接用 ai-project 的设计作答：</b></p>
+      <ul>
+        <li><b>知识层</b>：商户上传商品文档 → RAG 入库（Milvus ivf_flat + cosine，检索阈值 0.3、top5）；多租户用 tenant_id metadata 过滤。</li>
+        <li><b>人设层</b>：role 表 12 字段（沟通风格/解决问题思路/情绪智力/<b>escalationCriteria 升级人工判定</b>/结束语），prompt 组装时注入。</li>
+        <li><b>会话层</b>：WebSocket 双端点（商户/客户）+ 自定义编解码器 + 连接池；session 状态机 AI ⇄ HUMAN；消息 5 种身份 + 已读状态。</li>
+        <li><b>记忆层</b>：Redis 短期 10 条窗口 + MySQL 长期。</li>
+        <li><b>兜底</b>：检索为空明确告知未查到；低置信度/情绪识别触发转人工；流式组装逐帧推送。</li>
+      </ul></div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">E2</span>设计一个多 Agent 任务编排系统。</div>
+    <div class="a">
+      <p><b>work-together 的设计即答案</b>：Spec/Plan/Verify 三段式主持 + 文件归属并发控制 + 状态机调度 + 依赖 DAG + 指纹验收 + 可见性证据。关键取舍：为什么文件归属而不是锁？（声明式、可在 plan 阶段静态验证冲突、支持并行窗口最大化）；为什么 sha256 全量指纹而不是事件监听？（不依赖执行器诚实上报，兜住一切旁路写入）。</p>
+    </div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">E3</span>设计一个短链系统 / 限流器。（系统设计笔记题）</div>
+    <div class="a">
+      <p><b>system-design-notes 28 章是弹药库</b>：短链（hash + base62 vs 预生成号段、301/302、缓存、冲突处理）；限流器（令牌桶 vs 漏桶 vs 滑动窗口计数、Redis + Lua 原子性、分布式限流、竞争条件）。<b>结合项目落地经验</b>：ai-image 用 Guava RateLimiter 做 2 QPS 的 Advisor 限流（tryAcquire 失败抛「系统繁忙」）；GoTrip 登录接口 IP+用户名 10 次/分限速 + Secure Cookie + 会话过期清理。可延伸谈一致性哈希（分布式缓存节点增减的最小迁移）、Snowflake（项目里见过分库分表场景的 ID 方案讨论）。</p>
+    </div>
+  </div>
+
+  <div class="qa"><div class="q"><span class="qno">E4</span>你的个人项目如果是团队协作/高并发场景，瓶颈会在哪？</div>
+    <div class="a">
+      <p><b>展示对自身系统边界的清醒认识：</b>GoTrip 当前「单人单库」架构天然回避了写冲突，若恢复多人协作：① 需要行级共享权限或自建授权层；② 写冲突要乐观锁（version 字段）或 CRDT；③ 活动排序的高频写适合队列合并。party-games 若高并发：长轮询的挂起连接是瓶颈（换 WS + 房间分片）；掼蛋/德州服务器单进程 vm 沙箱要按房间 worker 分发；任务队列（engine-host 单飞）要横向拆。核心：当前规模下我选了简单方案，并明确知道扩容的触发点和解法。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 风险 ============ -->
+<section id="risk">
+  <h2>⑬ 诚实口径与风险点<span class="en">Risk Control</span></h2>
+  <div class="callout red">
+    <b>面试前必读——这些说法会翻车：</b>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>仓库/话题</th><th>❌ 不要说</th><th>✅ 建议口径</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">妙记 Lite</td><td>「用了 Whisper 语音识别」「AI 智能总结」</td><td>「转写层是规则模拟，设计了 Provider 注册表可切换接入 Whisper 骨架；亮点在任务状态机、原子存储、双模式播放器」</td></tr>
+      <tr><td class="nowrap">ai-project</td><td>「RAG 客服已上线/已完成」</td><td>「领域建模与前端完成，RAG 入库与 AI 应答链路编码中；提示词文档里有用 LLM 做系统设计的实践」</td></tr>
+      <tr><td class="nowrap">spring-ai</td><td>「我精通 Spring AI 全部能力（MCP/流式/多模态）」</td><td>「16 个模块覆盖到 RAG 重排序和工具调用；流式和 MCP 是下一步，多模态在 ai-image 仓库实践过」</td></tr>
+      <tr><td class="nowrap">RuoYi fork</td><td>「我维护/二次开发了若依单体版」</td><td>「对照阅读过 Shiro 与 Spring Security 两种认证体系源码」（该 fork 本人 0 提交）</td></tr>
+      <tr><td class="nowrap">RuoYi-Vue 后端</td><td>「写了 7.8 万行后端代码」</td><td>「基于若依基座开发 fdshare 模块：4 张表、15 个接口、13 次提交约 2,400 行自研」</td></tr>
+      <tr><td class="nowrap">An-advanced-guide</td><td>「我的开源项目 / fork 维护」</td><td>「基于开源学习指南重建工程体系：CI/CD、E2E 冒烟、内容校验脚本，并扩写了 AI 学习章节」</td></tr>
+      <tr><td class="nowrap">总代码量</td><td>「这两个月写了 56 万行代码」</td><td>「542 次提交、自研代码与内容约 10 万行；总量含基线导入与上游同步」</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout">
+    <b>加分原则：</b>主动暴露未完成的部分反而建立可信度——「设计完成、编码进行中」「这里是模拟数据、接入点已留好」「这是我的下一步计划」都是成熟工程师的表达。
+  </div>
+</section>
+
+<!-- ============ 速记 ============ -->
+<section id="cheat">
+  <h2>⑭ 一页速记卡<span class="en">Cheat Sheet</span></h2>
+  <div class="kpis">
+    <div class="kpi"><b>542</b><span>总提交 / 57 活跃天</span></div>
+    <div class="kpi"><b>225</b><span>GoTrip 提交（25 天）</span></div>
+    <div class="kpi"><b>~2 万行</b><span>GoTrip Web 代码</span></div>
+    <div class="kpi"><b>9 款</b><span>party-games 游戏</span></div>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>类别</th><th>必须记住的数字与事实</th></tr></thead>
+    <tbody>
+      <tr><td>总体</td><td>2026.8.3–10.18 · 17 仓库 · 542 提交 · 峰值 9/12（55 次）· SkillHub 上架 2 个 Skill（work-together v1.2.0 / wb-buddy-checkin v1.1.3）</td></tr>
+      <tr><td>RAG</td><td>embedding 批次上限 12 · Milvus collection 不能带 "-" · 查询重写 RewriteQueryTransformer · 重排 topK=200 → rerank · threshold 0.4</td></tr>
+      <tr><td>记忆</td><td>Redis(窗口10) → MySQL → conversationId 隔离 · ≥5 条触发摘要（80–300字）· PII 脱敏双 ChatClient</td></tr>
+      <tr><td>Agent</td><td>四模式：评估-优化（手写 vs StateGraph）/ 路由 / 监督者（JSON 数组）/ 串并行扇出 · work-together 状态机 7 态 · 指纹验收 · 可见性三要素</td></tr>
+      <tr><td>博弈 AI</td><td>五子棋：活四 50万/冲四 3万/四三+12万 · 迭代加深 2→4 · block 强制延伸 · 象棋：Zobrist 双 32 位 + quiesce 限深 4 · 德州：300–2600 次模拟 · AA 单挑 85.2%</td></tr>
+      <tr><td>验证</td><td>20 万手交叉验证 · 掼蛋 fuzz 25 万局 + 差分 missing=0 · 28 套测试 2600+ 断言 · GoTrip 验收 190 截图 46/46</td></tr>
+      <tr><td>协议</td><td>长轮询 25s 挂起 + 版本号 · RFC6455 手写（掩码/分片/BigUInt64 长度）· 命名管道读写并发 EINVAL · HMAC 四帧握手双向验证</td></tr>
+      <tr><td>教训</td><td>缓存键漏 passengers → 污染 · 先 listen 再 initDb · 写后立即 list 有可见性延迟 · JSON 列 vs 宽表取舍 · AI 类目审核驳回 → 去 AI 化改造</td></tr>
+    </tbody>
+  </table></div>
+  <p class="lead">配套文档：<a href="项目提交分析报告.html">项目提交分析报告（542 条提交明细）</a></p>
+</section>
+</main>
+
+<footer>基于 ice-colaa 各仓库源码与 git 历史整理 · 生成于 2026-10-18 · 答案均可在对应仓库中找到实现依据</footer>
+
+<script>
+(function(){
+  var sb = document.getElementById('sidebar');
+  var bd = document.getElementById('backdrop');
+  var fab = document.getElementById('menuBtn');
+  var reopen = document.getElementById('reopenBtn');
+  var dockBtn = document.getElementById('dockBtn');
+  var closeBtn = document.getElementById('sideClose');
+  var KEY = 'reportNav:' + (location.pathname.split('/').pop() || 'index');
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { saved = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} }
+  function isMobile(){ return window.innerWidth <= 900; }
+
+  var links = Array.prototype.slice.call(sb.querySelectorAll('a'));
+  var sections = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  function setActive(id){
+    links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === '#' + id); });
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if (e.isIntersecting) setActive(e.target.id); });
+  }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+  sections.forEach(function(s){ if (s) io.observe(s); });
+  if (sections[0]) setActive(sections[0].id);
+
+  /* 分组折叠：把每组链接包进 .nav-links，点击组标题展开/收起 */
+  var brand = sb.querySelector('.brand'), tools = sb.querySelector('.side-tools');
+  var groups = [], cur = null;
+  Array.prototype.slice.call(sb.children).forEach(function(el){
+    if (el === brand || el === tools) return;
+    if (el.classList.contains('nav-group')) { cur = { head: el, items: [] }; groups.push(cur); }
+    else if (cur && el.tagName === 'A') cur.items.push(el);
+  });
+  groups.forEach(function(g, gi){
+    var wrap = document.createElement('div');
+    wrap.className = 'nav-links';
+    g.items.forEach(function(it){ wrap.appendChild(it); });
+    sb.insertBefore(wrap, g.head.nextSibling);
+    var label = g.head.textContent.trim();
+    g.head.classList.add('collapsible');
+    g.head.setAttribute('role', 'button');
+    g.head.setAttribute('tabindex', '0');
+    g.head.innerHTML = '<span>' + label + '</span><span class="arrow" aria-hidden="true">▾</span>';
+    function apply(){
+      var c = !!saved['g' + gi];
+      g.head.classList.toggle('collapsed', c);
+      wrap.hidden = c;
+    }
+    function toggle(){ saved['g' + gi] = !saved['g' + gi]; save(); apply(); }
+    g.head.addEventListener('click', toggle);
+    g.head.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
+    apply();
+  });
+
+  /* 导航栏位置：左 ⇄ 右（记忆偏好） */
+  function applyDock(){
+    document.body.classList.toggle('dock-right', !!saved.dock);
+    dockBtn.title = saved.dock ? '把导航栏移到左侧' : '把导航栏移到右侧';
+  }
+  dockBtn.addEventListener('click', function(){ saved.dock = !saved.dock; save(); applyDock(); });
+  applyDock();
+
+  /* 桌面收起/展开；移动端 ✕ 为关闭抽屉 */
+  function applyCollapse(){ document.body.classList.toggle('side-collapsed', !!saved.collapsed); }
+  closeBtn.addEventListener('click', function(){
+    if (isMobile()) closeDrawer();
+    else { saved.collapsed = true; save(); applyCollapse(); }
+  });
+  reopen.addEventListener('click', function(){ saved.collapsed = false; save(); applyCollapse(); });
+  applyCollapse();
+
+  /* 移动端抽屉 */
+  function openDrawer(){
+    sb.classList.add('open'); bd.classList.add('show'); document.body.classList.add('no-scroll');
+    var act = sb.querySelector('a.active');
+    if (act && act.offsetParent) { try { act.scrollIntoView({ block: 'center' }); } catch (e) {} }
+  }
+  function closeDrawer(){
+    sb.classList.remove('open'); bd.classList.remove('show'); document.body.classList.remove('no-scroll');
+  }
+  fab.addEventListener('click', function(){
+    sb.classList.contains('open') ? closeDrawer() : openDrawer();
+  });
+  bd.addEventListener('click', closeDrawer);
+  links.forEach(function(a){
+    a.addEventListener('click', function(){ if (isMobile()) closeDrawer(); });
+  });
+
+  /* 边缘滑动手势：靠边滑入打开，反向滑动关闭 */
+  var tx = null, ty = null;
+  window.addEventListener('touchstart', function(e){
+    if (!isMobile()) return;
+    var t = e.touches[0]; tx = t.clientX; ty = t.clientY;
+  }, { passive: true });
+  window.addEventListener('touchend', function(e){
+    if (!isMobile() || tx === null) return;
+    var t = e.changedTouches[0];
+    var dx = t.clientX - tx, dy = Math.abs(t.clientY - ty);
+    var open = sb.classList.contains('open');
+    if (dy < 60 && dx > 56 && !open && (saved.dock ? tx >= window.innerWidth - 32 : tx <= 32)) openDrawer();
+    else if (dy < 60 && Math.abs(dx) > 56 && open && ((saved.dock && dx > 0) || (!saved.dock && dx < 0))) closeDrawer();
+    tx = null;
+  }, { passive: true });
+})();
+</script>
+</body>
+</html>
